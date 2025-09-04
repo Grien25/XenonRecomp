@@ -87,18 +87,9 @@ void ReadTable(Image& image, SwitchTable& table)
     ppc::Disassemble(code, table.base, insn);
     pOffset = insn.operands[1] << 16;
 
-    // ADDI
-    if (table.type == SWITCH_ABSOLUTE || table.type == SWITCH_SHORTOFFSET)
-    {
-        ppc::Disassemble(code + 2, table.base + 8, insn);
-        pOffset += insn.operands[2];
-    }
-    else
-    {
-        ppc::Disassemble(code + 1, table.base + 4, insn);
-        pOffset += insn.operands[2];
-    }
-    
+    ppc::Disassemble(code + 1, table.base + 4, insn);
+    pOffset += insn.operands[2];
+
     if (table.type == SWITCH_ABSOLUTE)
     {
         const auto* offsets = (be<uint32_t>*)image.Find(pOffset);
@@ -116,7 +107,7 @@ void ReadTable(Image& image, SwitchTable& table)
         ppc::Disassemble(code + 4, table.base + 0x10, insn);
         base = insn.operands[1] << 16;
 
-        ppc::Disassemble(code + 6, table.base + 0x14 + 4, insn);
+        ppc::Disassemble(code + 5, table.base + 0x14, insn);
         base += insn.operands[2];
 
         ppc::Disassemble(code + 3, table.base + 0x0C, insn);
@@ -137,7 +128,7 @@ void ReadTable(Image& image, SwitchTable& table)
             ppc::Disassemble(code + 3, table.base + 0x0C, insn);
             base = insn.operands[1] << 16;
 
-            ppc::Disassemble(code + 5, table.base + 0x10 + 4, insn);
+            ppc::Disassemble(code + 4, table.base + 0x10, insn);
             base += insn.operands[2];
 
             for (size_t i = 0; i < table.labels.size(); i++)
@@ -335,18 +326,16 @@ int main(int argc, char** argv)
             }
         };
 
-
     uint32_t absoluteSwitch[] =
     {
         PPC_INST_LIS,
-        PPC_INST_RLWINM,
         PPC_INST_ADDI,
+        PPC_INST_RLWINM,
         PPC_INST_LWZX,
         PPC_INST_MTCTR,
         PPC_INST_BCTR,
     };
 
-    //match
     uint32_t computedSwitch[] =
     {
         PPC_INST_LIS,
@@ -354,41 +343,33 @@ int main(int argc, char** argv)
         PPC_INST_LBZX,
         PPC_INST_RLWINM,
         PPC_INST_LIS,
-        PPC_INST_NOP, //
         PPC_INST_ADDI,
         PPC_INST_ADD,
         PPC_INST_MTCTR,
     };
 
-
-    // match
     uint32_t offsetSwitch[] =
     {
         PPC_INST_LIS,
         PPC_INST_ADDI,
         PPC_INST_LBZX,
         PPC_INST_LIS,
-        PPC_INST_NOP, //
         PPC_INST_ADDI,
-        PPC_INST_NOP, //
         PPC_INST_ADD,
         PPC_INST_MTCTR,
     };
 
-    //match
     uint32_t wordOffsetSwitch[] =
     {
         PPC_INST_LIS,
-        PPC_INST_RLWINM, //
-        PPC_INST_ADDI, //
+        PPC_INST_ADDI,
+        PPC_INST_RLWINM,
         PPC_INST_LHZX,
         PPC_INST_LIS,
         PPC_INST_ADDI,
-        PPC_INST_NOP, //
         PPC_INST_ADD,
         PPC_INST_MTCTR,
     };
-
 
     println("# ---- ABSOLUTE JUMPTABLE ----");
     scanPattern(absoluteSwitch, std::size(absoluteSwitch), SWITCH_ABSOLUTE);
