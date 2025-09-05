@@ -765,6 +765,14 @@ bool Recompiler::Recompile(
         printConditionalBranch(false, "so");
         break;
 
+    case PPC_INST_BSOLR:
+        println("\tif ({}.so) return;", cr(insn.operands[0]));
+        break;
+
+    case PPC_INST_BNSLR:
+        println("\tif (!{}.so) return;", cr(insn.operands[0]));
+        break;
+
     case PPC_INST_BNECTR:
         println("\tif (!{}.eq) {{", cr(insn.operands[0]));
         println("\t\tPPC_CALL_INDIRECT_FUNC({}.u32);", ctr());
@@ -2320,6 +2328,16 @@ bool Recompiler::Recompile(
             println("\t{}.setFromMask(_mm_load_ps({}.f32), 0xF);", cr(6), v(insn.operands[0]));
         break;
 
+    case PPC_INST_VCMPGTSW: // dot form will be detected via the opcode name
+        println("\tsimde_mm_store_si128((__m128i*){}.u32, "
+               "_mm_cmpgt_epi32(_mm_load_si128((__m128i*){}.u32), "
+                                "_mm_load_si128((__m128i*){}.u32)));",
+               v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
+        if (strchr(insn.opcode->name, '.'))
+            println("\t{}.setFromMask(_mm_castsi128_ps(_mm_load_si128((__m128i*){}.u32)), 0xF);",
+                   cr(6), v(insn.operands[0]));
+        break;
+
     case PPC_INST_VCMPGTFP:
     case PPC_INST_VCMPGTFP128:
         printSetFlushMode(true);
@@ -2624,6 +2642,13 @@ bool Recompiler::Recompile(
         printSetFlushMode(true);
         println("\tsimde_mm_store_ps({}.f32, _mm_round_ps(_mm_load_ps({}.f32), _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));", v(insn.operands[0]), v(insn.operands[1]));
         break;
+
+    case PPC_INST_VRFIP:
+    case PPC_INST_VRFIP128:
+        printSetFlushMode(true);
+        println("\tsimde_mm_store_ps({}.f32, _mm_round_ps(_mm_load_ps({}.f32), _MM_FROUND_TO_POS_INT | _MM_FROUND_NO_EXC));", v(insn.operands[0]), v(insn.operands[1]));
+        break;
+
 
     case PPC_INST_VRFIZ:
     case PPC_INST_VRFIZ128:
