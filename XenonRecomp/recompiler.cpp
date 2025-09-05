@@ -2338,6 +2338,7 @@ bool Recompiler::Recompile(
                    cr(6), v(insn.operands[0]));
         break;
 
+
     case PPC_INST_VCMPGTFP:
     case PPC_INST_VCMPGTFP128:
         printSetFlushMode(true);
@@ -2353,6 +2354,21 @@ bool Recompiler::Recompile(
     case PPC_INST_VCMPGTUH:
         println("\tsimde_mm_store_si128((__m128i*){}.u8, _mm_cmpgt_epu16(_mm_load_si128((__m128i*){}.u16), _mm_load_si128((__m128i*){}.u16)));", v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
         break;
+
+    case PPC_INST_VCMPGTUW:
+{
+    // Unsigned compare via sign-bit bias: (a ^ 0x80000000) > (b ^ 0x80000000)
+    println("\tsimde_mm_store_si128((__m128i*){}.u32, "
+            "_mm_cmpgt_epi32("
+              "_mm_xor_si128(_mm_load_si128((__m128i*){}.u32), _mm_set1_epi32(0x80000000)), "
+              "_mm_xor_si128(_mm_load_si128((__m128i*){}.u32), _mm_set1_epi32(0x80000000))));",
+            v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
+
+    // If dotted form, update CR6 from the boolean mask lanes.
+    println("\tif (strchr(\"{}\", '.')) {}.setFromMask(_mm_castsi128_ps(_mm_load_si128((__m128i*){}.u32)), 0xF);",
+            insn.opcode->name, cr(6), v(insn.operands[0]));
+    break;
+}
 
     case PPC_INST_VEXPTEFP:
     case PPC_INST_VEXPTEFP128:
@@ -2575,6 +2591,7 @@ bool Recompiler::Recompile(
         break;
 
     case PPC_INST_VPKUHUM:
+    case PPC_INST_VPKUHUM128:
         // Pack without saturation - use shuffle to select lower bytes
         println("\tsimde_mm_store_si128((__m128i*){}.u8, _mm_packus_epi16("
             "_mm_and_si128(_mm_load_si128((__m128i*){}.u16), _mm_set1_epi16(0xFF)), "
@@ -2663,6 +2680,20 @@ bool Recompiler::Recompile(
         break;
     }
 
+    case PPC_INST_VRLW128:
+{
+    // Per-lane variable rotate: sh = VB.low5; (A<<sh)|(A>>(32-sh)), with safe masking.
+    for (int i = 0; i < 4; ++i) {
+        println("\t{}.u32[{}] = ({}.u32[{}] << ({}.u8[{}] & 0x1F)) | "
+                "({}.u32[{}] >> ((32 - ({}.u8[{}] & 0x1F)) & 0x1F));",
+                v(insn.operands[0]), i,
+                v(insn.operands[1]), i,
+                v(insn.operands[2]), i * 4,
+                v(insn.operands[1]), i,
+                v(insn.operands[2]), i * 4);
+    }
+    break;
+}
 
     case PPC_INST_VRSQRTEFP:
     case PPC_INST_VRSQRTEFP128:
@@ -2817,6 +2848,22 @@ bool Recompiler::Recompile(
     case PPC_INST_VSUBUBS:
         println("\tsimde_mm_store_si128((__m128i*){}.u8, _mm_subs_epu8(_mm_load_si128((__m128i*){}.u8), _mm_load_si128((__m128i*){}.u8)));", v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
         break;
+
+    case PPC_INST_VSUBUBM:
+{
+    println("\tsimde_mm_store_si128((__m128i*){}.u8, "
+            "simde_mm_sub_epi8(_mm_load_si128((__m128i*){}.u8), _mm_load_si128((__m128i*){}.u8)));",
+            v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
+    break;
+}
+
+    case PPC_INST_VSUBUWM:
+{
+    println("\tsimde_mm_store_si128((__m128i*){}.u32, "
+            "simde_mm_sub_epi32(_mm_load_si128((__m128i*){}.u32), _mm_load_si128((__m128i*){}.u32)));",
+            v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
+    break;
+}
 
     case PPC_INST_VSUBUHM:
         println("\tsimde_mm_store_si128((__m128i*){}.u8, _mm_sub_epi16(_mm_load_si128((__m128i*){}.u8), _mm_load_si128((__m128i*){}.u8)));", v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
