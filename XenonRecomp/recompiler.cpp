@@ -2667,14 +2667,6 @@ bool Recompiler::Recompile(
                 v(insn.operands[0]), i, v(insn.operands[1]), i, v(insn.operands[2]), i);
         break;
 
-    case PPC_INST_VSLO: {
-        println("\tuint8_t sh = {}.u8[0] & 0xF;", v(insn.operands[2])); // VB
-        println("\tfor (size_t i = 0; i < 16; ++i) {}.u8[i] = (i + sh < 16) ? {}.u8[i + sh] : 0;",
-            v(insn.operands[0]), // VD
-            v(insn.operands[1])); // VA
-        break;
-            }
-
     case PPC_INST_VREFP:
     case PPC_INST_VREFP128:
         // TODO: see if we can use rcp safely
