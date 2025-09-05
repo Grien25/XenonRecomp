@@ -1346,7 +1346,9 @@ bool Recompiler::Recompile(
     case PPC_INST_LVEWX:
     case PPC_INST_LVEWX128:
     case PPC_INST_LVX:
+    case PPC_INST_LVXL:
     case PPC_INST_LVX128:
+    case PPC_INST_LVXL128:
         // NOTE: for endian swapping, we reverse the whole vector instead of individual elements.
         // this is accounted for in every instruction (eg. dp3 sums yzw instead of xyz)
         print("\tsimde_mm_store_si128((__m128i*){}.u8, simde_mm_shuffle_epi8(simde_mm_load_si128((__m128i*)(base + ((", v(insn.operands[0]));
