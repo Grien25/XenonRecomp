@@ -682,6 +682,19 @@ inline simde__m128i simde_mm_vctsxs(simde__m128 src1)
     return simde_mm_andnot_si128(simde_mm_castps_si128(xmm2), simde_mm_castps_si128(dest));
 }
 
+inline simde__m128i simde_mm_vctuxs(simde__m128 src1)
+{
+    simde__m128 xmm0 = simde_mm_max_ps(src1, simde_mm_set1_epi32(0));
+    simde__m128 xmm1 = simde_mm_cmpge_ps(xmm0, simde_mm_set1_ps((float)0x80000000));
+    simde__m128 xmm2 = simde_mm_sub_ps(xmm0, simde_mm_set1_ps((float)0x80000000));
+    xmm0 = simde_mm_blendv_ps(xmm0, xmm2, xmm1);
+    simde__m128i dest = simde_mm_cvttps_epi32(xmm0);
+    xmm0 = simde_mm_cmpeq_epi32(dest, simde_mm_set1_epi32(INT_MIN));
+    xmm1 = simde_mm_and_si128(xmm1, simde_mm_set1_epi32(INT_MIN));
+    dest = simde_mm_add_epi32(dest, xmm1);
+    return simde_mm_or_si128(dest, xmm0);
+}
+
 inline simde__m128i simde_mm_vsr(simde__m128i a, simde__m128i b)
 {
     b = simde_mm_srli_epi64(simde_mm_slli_epi64(b, 61), 61);
