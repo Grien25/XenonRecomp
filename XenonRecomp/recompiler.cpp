@@ -1531,6 +1531,26 @@ bool Recompiler::Recompile(
             println("\t{}.compare<int32_t>({}.s32, 0, {});", cr(0), r(insn.operands[0]), xer());
         break;
 
+    // rD <- (rA low 16) * (rB low 16), unsigned 32-bit product
+    case PPC_INST_MULLHW:
+        // Compute signed 16-bit multiply: low 16 bits of rA and rB -> 32-bit product.
+        // Store in low 32 bits of rD, zero-extend to 64 bits (clear high 32).
+        println("\t{}.u64 = uint64_t(int32_t({}.s16) * int32_t({}.s16));", r(insn.operands[0]), r(insn.operands[1]), r(insn.operands[2]));
+        if (strchr(insn.opcode->name, '.')) {
+            // Update CR0 if record form (dot).
+            println("\t{}.compare<int32_t>({}.s32, 0, {});", cr(0), r(insn.operands[0]), xer());
+            }
+        break;
+
+    case PPC_INST_MULLHWU:
+        println("\t{}.u64 = uint64_t(uint32_t({}.u16) * uint32_t({}.u16));", r(insn.operands[0]), r(insn.operands[1]), r(insn.operands[2]));
+        if (strchr(insn.opcode->name, '.')) {
+            println("\t{}.compare<int32_t>({}.s32, 0, {});", cr(0), r(insn.operands[0]), xer());
+        }
+    break;
+
+    // NOTE: MULLHW and MULLHWU are untested PPC INSTRUCTIONS (used in very few games) as of 09/09/2025 
+    
     case PPC_INST_MULLD:
         println("\t{}.s64 = {}.s64 * {}.s64;", r(insn.operands[0]), r(insn.operands[1]), r(insn.operands[2]));
         break;
