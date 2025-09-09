@@ -2304,7 +2304,7 @@ bool Recompiler::Recompile(
         }
         else
         {
-            println("_mm_cvtepi32_ps(simde_mm_load_si128((simde__m128i**){}.u32)));", v(insn.operands[1]));
+            println("simde__mm_cvtepi32_ps(simde_mm_load_si128((simde__m128i**){}.u32)));", v(insn.operands[1]));
         }
         break;
     }
@@ -2382,8 +2382,8 @@ bool Recompiler::Recompile(
         
     case PPC_INST_VCMPGTSW: // dot form will be detected via the opcode name
         println("\tsimde_mm_store_si128((simde__m128i**){}.u32, "
-               "_mm_cmpgt_epi32(simde_mm_load_si128((simde__m128i**){}.u32), "
-                                "_mm_load_si128((simde__m128i**){}.u32)));",
+               "simde__mm_cmpgt_epi32(simde_mm_load_si128((simde__m128i**){}.u32), "
+                                "simde__mm_load_si128((simde__m128i**){}.u32)));",
                v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
         if (strchr(insn.opcode->name, '.'))
             println("\t{}.setFromMask(simde_mm_castsi128_ps(simde_mm_load_si128((simde__m128i**){}.u32)), 0xF);",
@@ -2413,9 +2413,9 @@ bool Recompiler::Recompile(
 {
     // Unsigned compare via sign-bit bias: (a ^ 0x80000000) > (b ^ 0x80000000)
     println("\tsimde_mm_store_si128((simde__m128i**){}.u32, "
-            "_mm_cmpgt_epi32("
-              "_mm_xor_si128(simde_mm_load_si128((simde__m128i**){}.u32), simde_mm_set1_epi32(0x80000000)), "
-              "_mm_xor_si128(simde_mm_load_si128((simde__m128i**){}.u32), simde_mm_set1_epi32(0x80000000))));",
+            "simde__mm_cmpgt_epi32("
+              "simde__mm_xor_si128(simde_mm_load_si128((simde__m128i**){}.u32), simde_mm_set1_epi32(0x80000000)), "
+              "simde__mm_xor_si128(simde_mm_load_si128((simde__m128i**){}.u32), simde_mm_set1_epi32(0x80000000))));",
             v(insn.operands[0]), v(insn.operands[1]), v(insn.operands[2]));
 
     // If dotted form, update CR6 from the boolean mask lanes.
@@ -2542,9 +2542,9 @@ bool Recompiler::Recompile(
         print("\tsimde_mm_store_si128((simde__m128i**){}.u8, ", v(insn.operands[0]));
 
         if (insn.operands[1] != insn.operands[2])
-            println("_mm_or_si128(simde_mm_load_si128((simde__m128i**){}.u8), simde_mm_load_si128((simde__m128i**){}.u8)));", v(insn.operands[1]), v(insn.operands[2]));
+            println("simde__mm_or_si128(simde_mm_load_si128((simde__m128i**){}.u8), simde_mm_load_si128((simde__m128i**){}.u8)));", v(insn.operands[1]), v(insn.operands[2]));
         else
-            println("_mm_load_si128((simde__m128i**){}.u8));", v(insn.operands[1]));
+            println("simde__mm_load_si128((simde__m128i**){}.u8));", v(insn.operands[1]));
 
         break;
 
@@ -2648,8 +2648,8 @@ bool Recompiler::Recompile(
     case PPC_INST_VPKUHUM128:
         // Pack without saturation - use shuffle to select lower bytes
         println("\tsimde_mm_store_si128((simde__m128i**){}.u8, simde_mm_packus_epi16("
-            "_mm_and_si128(simde_mm_load_si128((simde__m128i**){}.u16), simde_mm_set1_epi16(0xFF)), "
-            "_mm_and_si128(simde_mm_load_si128((simde__m128i**){}.u16), simde_mm_set1_epi16(0xFF))));",
+            "simde__mm_and_si128(simde_mm_load_si128((simde__m128i**){}.u16), simde_mm_set1_epi16(0xFF)), "
+            "simde__mm_and_si128(simde_mm_load_si128((simde__m128i**){}.u16), simde_mm_set1_epi16(0xFF))));",
             v(insn.operands[0]), v(insn.operands[2]), v(insn.operands[1]));
         break;
 
@@ -2986,9 +2986,9 @@ bool Recompiler::Recompile(
         print("\tsimde_mm_store_si128((simde__m128i**){}.u8, ", v(insn.operands[0]));
 
         if (insn.operands[1] != insn.operands[2])
-            println("_mm_xor_si128(simde_mm_load_si128((simde__m128i**){}.u8), simde_mm_load_si128((simde__m128i**){}.u8)));", v(insn.operands[1]), v(insn.operands[2]));
+            println("simde__mm_xor_si128(simde_mm_load_si128((simde__m128i**){}.u8), simde_mm_load_si128((simde__m128i**){}.u8)));", v(insn.operands[1]), v(insn.operands[2]));
         else
-            println("_mm_setzero_si128());");
+            println("simde__mm_setzero_si128());");
 
         break;
 
